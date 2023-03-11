@@ -1,0 +1,107 @@
+import warnings
+warnings.filterwarnings('ignore')
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os as os
+#to display all rows columns 
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)  
+pd.set_option('display.expand_frame_repr', False)
+pd.set_option('max_colwidth', -1)
+# ipl_ball_by_ball_data
+df = pd.read_csv('IPL_ball_by_ball_updated.csv')
+os.getcwd()
+df.head(5)
+df.innings.unique()
+req_df = df[(df.striker == 'AB de Villiers') & (df.bowler == 'JJ Bumrah')]
+df = df[(df.innings == 1) | (df.innings == 2)]
+df.innings.unique()
+df.bowling_team.unique()
+df[df.bowling_team == 'Mumbai Indians']['bowler'].unique()
+# player 1: JJ Bumrah
+# player 2: AB de Villiers
+df[df.batting_team=='Royal Challengers Bangalore']['striker'].unique()
+req_df = df[(df.striker == 'AB de Villiers') & (df.bowler == 'JJ Bumrah')]
+req_df.head()
+# No of runs scored?
+# No of balls faced?
+# No of times dismissed?
+# runs scored
+sum(req_df.runs_off_bat)
+# balls faced
+len(req_df)
+# outs
+len(req_df[req_df.player_dismissed == 'AB de Villiers'])
+# strike rate
+100*sum(req_df.runs_off_bat)/len(req_df)
+# Comparision against all batsman Bumrah has bowled to
+df.head(1)
+bumrah_df = df[df.bowler =='JJ Bumrah']
+bumrah_df.head()
+# runs scored by this batsman
+bdf1 = pd.DataFrame(bumrah_df.groupby('striker')['runs_off_bat'].sum()).reset_index()
+bdf1.head(5)
+bdf2 = pd.DataFrame(bumrah_df.groupby('striker')['ball'].count()).reset_index()
+bdf2.head(5)
+bdf3 = bdf1.merge(bdf2, on = 'striker', how = 'left')
+bdf3.head(1)
+bdf3['strike_rate'] = 100*bdf3['runs_off_bat']/bdf3['ball']
+bdf3.head(3)
+# min criteria: 30 balls
+bdf3 = bdf3[bdf3.ball >= 30]
+bdf3.head()
+bdf3['strike_rate'] = 100*bdf3['runs_off_bat']/bdf3['ball']
+bdf3.head(1)
+# min criteria: 30 balls
+bdf3 = bdf3[bdf3.ball >= 30]
+bdf3.head()
+abd_df = df[df.striker =='AB de Villiers']
+# runs scored by this batsman
+adf1 = pd.DataFrame(abd_df.groupby('bowler')['runs_off_bat'].sum()).reset_index()
+adf1.head()
+# balls faced
+adf2 = pd.DataFrame(abd_df.groupby('bowler')['ball'].count()).reset_index()
+adf2.head()
+adf3 = adf1.merge(adf2, on = 'bowler', how = 'left')
+adf3['strike_rate'] = 100*adf3['runs_off_bat']/adf3['ball']
+adf3 = adf3[adf3.ball >= 30]
+bdf3.reset_index(inplace = True, drop = True)
+adf3.reset_index(inplace = True, drop = True)
+
+plt.figure(figsize = (16, 8))
+plt.scatter(bdf3.strike_rate, bdf3.runs_off_bat)
+
+for i in range(len(bdf3)):
+#     plt.text(x, y, text)
+    if bdf3['striker'][i] == 'V Kohli':
+        plt.text(bdf3['strike_rate'][i] - 7, bdf3['runs_off_bat'][i] - 1, bdf3['striker'][i] )
+    else:
+        plt.text(bdf3['strike_rate'][i] + 1, bdf3['runs_off_bat'][i] - 1, bdf3['striker'][i] )
+
+plt.axvline(120, ls = '--', color = 'grey')
+plt.axhline(60, ls = '--', color = 'grey')
+plt.title('Batsman against Bumrah in IPL (min 30 balls faced)', fontsize = 20)
+plt.xlabel('Strike rate')
+plt.ylabel('Runs scored')
+plt.show()
+
+plt.figure(figsize = (16,8))
+plt.rcParams['axes.facecolor'] = '#fff7fb'
+plt.scatter(bdf3.strike_rate, bdf3.runs_off_bat)
+
+for i in range(len(bdf3)):
+    if bdf3.striker[i] == 'V Kohli':
+        plt.text(bdf3.strike_rate[i] - 7, bdf3.runs_off_bat[i] - 1, bdf3.striker[i])
+    elif bdf3.striker[i] == 'AB de Villiers':
+        plt.text(bdf3.strike_rate[i] + 2, bdf3.runs_off_bat[i] - 1, bdf3.striker[i], color = 'maroon')
+    elif (bdf3.striker[i] == 'S Dhawan') | (bdf3.striker[i] == 'KL Rahul') | (bdf3.striker[i] == 'JP Duminy'):
+        plt.text(bdf3.strike_rate[i] + 2, bdf3.runs_off_bat[i] - 1, bdf3.striker[i])
+
+plt.axvline(120, ls = '--', color = 'grey')
+plt.axhline(60, ls = '--', color = 'grey')
+plt.title("Best Batman against Bumrah", fontsize = 20)
+plt.xlabel('Strike rate')
+plt.ylabel('Runs scored')
+plt.savefig('Chart_ABD_vs_Bumrah_part1.jpg')
+plt.show()
